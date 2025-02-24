@@ -1,0 +1,115 @@
+name: Autograding Tests
+'on':
+- push
+- repository_dispatch
+permissions:
+  checks: write
+  actions: read
+  contents: read
+jobs:
+  run-autograding-tests:
+    runs-on: ubuntu-latest
+    if: github.actor != 'github-classroom[bot]'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Compilación y ejecución
+      id: compilacion-y-ejecucion
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: Compilación y ejecución
+        setup-command: g++ -o ejercicio ejercicio.cpp
+        command: printf "3\n2\n1\n" | ./ejercicio
+        timeout: 10
+        max-score: 2
+    - name: Prueba de salida
+      id: prueba-de-salida
+      uses: classroom-resources/autograding-io-grader@v1
+      with:
+        test-name: Prueba de salida
+        setup-command: g++ -o ejercicio ejercicio.cpp
+        command: "./ejercicio"
+        input: |-
+          3
+          2
+          3
+        expected-output: |-
+          *
+          **
+          ***
+          *
+          **
+          *
+          **
+          ***
+        comparison-method: exact
+        timeout: 10
+        max-score: 4
+    - name: Prueba de salida grande
+      id: prueba-de-salida-grande
+      uses: classroom-resources/autograding-io-grader@v1
+      with:
+        test-name: Prueba de salida grande
+        setup-command: g++ -o ejercicio ejercicio.cpp
+        command: "./ejercicio"
+        input: |-
+          10
+          20
+          15
+        expected-output: |-
+          *
+          **
+          ***
+          ****
+          *****
+          ******
+          *******
+          ********
+          *********
+          **********
+          *
+          **
+          ***
+          ****
+          *****
+          ******
+          *******
+          ********
+          *********
+          **********
+          ***********
+          ************
+          *************
+          **************
+          ***************
+          ****************
+          *****************
+          ******************
+          *******************
+          ********************
+          *
+          **
+          ***
+          ****
+          *****
+          ******
+          *******
+          ********
+          *********
+          **********
+          ***********
+          ************
+          *************
+          **************
+          ***************
+        comparison-method: exact
+        timeout: 10
+        max-score: 4
+    - name: Autograding Reporter
+      uses: classroom-resources/autograding-grading-reporter@v1
+      env:
+        COMPILACION-Y-EJECUCION_RESULTS: "${{steps.compilacion-y-ejecucion.outputs.result}}"
+        PRUEBA-DE-SALIDA_RESULTS: "${{steps.prueba-de-salida.outputs.result}}"
+        PRUEBA-DE-SALIDA-GRANDE_RESULTS: "${{steps.prueba-de-salida-grande.outputs.result}}"
+      with:
+        runners: compilacion-y-ejecucion,prueba-de-salida,prueba-de-salida-grande
